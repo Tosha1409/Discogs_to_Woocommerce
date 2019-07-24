@@ -94,7 +94,7 @@ class csv_file():
 	def set_category(self,category):
 		self.line[26]= category
 	def set_picture(self, picture):
-		self.line[30]= self.picturesurl+picture
+		self.line[29]= self.picturesurl+picture
 	def set_description(self, label):
 		self.line[7]=self.line[8]='<strong>('+self.artist_label_fix(label)+')</strong>'
 	def set_title(self, format):
