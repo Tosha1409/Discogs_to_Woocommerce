@@ -13,7 +13,7 @@ def price_fix(line):
 #settings and identification
 csvfile='discogs.csv' #csv file for saving items
 picturesfolder='photos/' #folder for pictures
-picturesurl='http://www.woodcutrecords.fi/wp-content/uploads/2019/06/' #url where is stored pictures at your woocommerce shop
+picturesurl='YOUR URL' #url where is stored pictures at your woocommerce shop
 categorieslist=['CDs','Vinyl', 'Tapes', 'Vinyls > 7"s', 'Vinyls > 10"s', 'Vinyls > LP/DLPS'] #names of categories
 weights=['85', '230', '135', '60', '65', '460', '690', '270', '400', '150' ,'220', '120', '180'] #weights of different items
 d = discogs_client.Client('ExampleApplication/0.1', user_token="ENTER YOUR TOKEN THERE") #discogs identification
@@ -104,7 +104,7 @@ for items in results:
 		line[18]= weight
 		line[25]= price_fix(items.price.value)
 		line[26]= category
-		line[30]= picturesurl+picture
+		line[29]= picturesurl+picture
 		#writing line to file and putting item to screen
 		writer.writerow(line)
 		print (u'Parsing - '+(line[3]))
