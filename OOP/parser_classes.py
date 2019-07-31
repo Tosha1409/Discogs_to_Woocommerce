@@ -23,6 +23,7 @@ class Csv_file():
 	def __init__(self, name):
 		#forming first line with name of rows
 		self.csvfile=name #csv file for saving items
+		self.header=False #does file have header
 	def __str__(self):
 		return (self.csvfile)
 	#creating file
@@ -33,7 +34,11 @@ class Csv_file():
 	def write_first_row(self): #writing first row with collumn names
 		self.writer.writerow(self.item.rows)	
 	def write_row(self):
-	        self.writer.writerow(self.item.line)
+		#check for header
+		if not self.header:
+			self.write_first_row()
+			self.header=True
+		self.writer.writerow(self.item.line)
 
 #picture and method to retrieve it
 class Picture():

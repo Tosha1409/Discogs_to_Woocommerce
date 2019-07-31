@@ -15,7 +15,6 @@ try:
 	writer = Csv_file(csvfile)
 	writer.open_file()
 	writer.add_item(i)
-	writer.write_first_row()
 	for item in results:
 		#taking items that are for sale only (cause rest is private collection etc)
 		if (item.status == "For Sale") and (items.id>=int(sys.argv[1])):
@@ -23,5 +22,5 @@ try:
 			i.parser()
 			writer.write_row()
 			print (u'Parsing - '+str(i))
-expect: pass
+except: pass
 print ('Finished!')
