@@ -1,7 +1,7 @@
 import sys, re, discogs_client, csv
 
 #connection to discpgs API
-class discogs_connection():
+class Discogs_connection():
 	#token is discogs token
 	def __init__(self,token):
 		self.user_token = token
@@ -18,69 +18,99 @@ class discogs_connection():
 	#returns connection
 	def return_connection(self):
 		return (self.connection)
-	#downloading picture to folder, and param is current item
-	def get_picture(self,folder,param):
-		try:
-			image = param.release.images[0]['uri']
-			#parsing and downloading first image
-			content, resp = self.connection._fetcher.fetch(None, 'GET', image, headers={'User-agent': self.connection.user_agent})
-			picture=(image.split('/')[-1]).split('.')[0]+'.jpg' 
-			with open(folder+picture, 'wb') as fh: fh.write(content)
-			fh.close()
-		except: picture=''
-		return (picture)
 
-class categories():
+class Csv_file():
+	def __init__(self, name):
+		#forming first line with name of rows
+		self.csvfile=name #csv file for saving items
+	def __str__(self):
+		return (self.csvfile)
+	#creating file
+	def add_item(self,item):
+	        self.item=item
+	def open_file(self): 
+		self.writer = csv.writer(open(self.csvfile, 'w',encoding='utf-8'), delimiter =',', quotechar='"', lineterminator='\r')
+	def write_first_row(self): #writing first row with collumn names
+		self.writer.writerow(self.item.rows)	
+	def write_row(self):
+	        self.writer.writerow(self.item.line)
+
+#picture and method to retrieve it
+class Picture():
+	def __init__(self,folder,info):
+		self.folder=folder
+		self.item_info=info
+		self.picture=''
+	#retriving picture
+	def get_picture(self,connection):
+		try:
+			image = self.item_info.release.images[0]['uri']
+			#parsing and downloading first image
+			content, resp = connection._fetcher.fetch(None, 'GET', image, headers={'User-agent': connection.user_agent})
+			self.picture=(image.split('/')[-1]).split('.')[0]+'.jpg' 
+			with open(self.folder+self.picture, 'wb') as fh: fh.write(content)
+			fh.close()
+		except: pass
+
+#categories
+class Categories():
 	def __init__(self):
 		self.categories = [{'Title':'CD', 'Category':'CDs', 'Details': ['CD', '85', 'DCD', '150', 'Tripple CD', '220']}, {'Title':'Cassette', 'Category':'Tapes', 'Details': ['Tape', '65']}, \
 		{'Title':'CDr', 'Category':'CDs', 'Details': ['CDR', '85']}]
 		self.vinyl_categories = [{'Title': 'LP|12"', 'Category': 'Vinyls, Vinyls > LP/DLPS', 'Details': ['LP', '230', 'DLP', '460', 'Tripple LP', '690']}, \
                 {'Title': '10"', 'Category': 'Vinyls, Vinyls > 10"s', 'Details': ['10"', '135', '2x10"', '270', '3x10"', '400']}, \
 		{'Title': '7"', 'Category': 'Vinyls, Vinyls > 7"s', 'Details': ['7"', '60', '2x7"', '120', '3x7"', '180'] }]
-	#for inner use
-	def parse(self,format_info,items):
-		category=format_info.get('Category')
+		self.category = ''
+		self.weight = 0
+		self.format = ''
+	#for inner_use
+	def _parse(self,format_info,item):
+		self.category=format_info.get('Category')
 		details=format_info.get('Details')
-		format=details[(int(items.release.formats[0]['qty'])-1)*2]
-		weight=details[(int(items.release.formats[0]['qty'])-1)*2+1]
-		return (category,format,weight)
+		self.format=details[(int(item.release.formats[0]['qty'])-1)*2]
+		self.weight=details[(int(item.release.formats[0]['qty'])-1)*2+1]
+	#for inner_use (parsing format info)
+	def _format_fix(self,item,format):
+		#parsing additional information about release from descriptions, if it is possible, cause there is not always this information
+		try:
+			extra = ' '+','.join(item.release.formats[0]['descriptions'])
+			prefix_words='Digipak|Digipack|Slipcase|A5 Digibook|Digibook|Digisleeve|Gatefold|Split|Jewel case|Jewelcase'
+			#detecting MiniAlbums and Picture vinyls (might need to be rewritten in future)
+			if (re.search('Mini-Album|EP|Mini', extra)) and ((self.format=='CD') or (self.format=='LP')): self.format = 'M'+self.format #adding M infront for minialbum releases
+			if (re.search('Picture Disc', extra)): self.format = 'Picture '+self.format #adding Picture word infront of format info
+			#finding additional details about format and adding it to right place, and keeping all what is left in brackets (usually it is vinyl colour and similar details) 
+			extra=re.search(prefix_words, item.release.formats[0]['text']) #if any of those words found them going infront
+			self.format += ' ('+re.sub(prefix_words,'',item.release.formats[0]['text']) +')'#rest goes beind in brackets
+			self.format = extra.group() + ' ' + self.format
+			self.format = re.sub('\(\s*\)','',self.format) #removing empty additinonal info like () or ( )
+			self.format = re.sub('\(\s*((\s*\S+)*)\s*\)',  r'(\1)',self.format) #removing extra white spaces
+		except: pass
 	#finding category,format and weight
-	def detect(self,items):
-		category=format=weight=''
+	def detect(self,item):
 		for format_info in self.categories:
-			if items.release.formats[0]['name']==format_info.get('Title'):
-				category,format,weight = self.parse(format_info,items)
+			if item.release.formats[0]['name']==format_info.get('Title'):
+				self._parse(format_info,item)
 				break
-		if items.release.formats[0]['name']=='Vinyl':
+		if item.release.formats[0]['name']=='Vinyl':
 			for format_info in self.vinyl_categories:
-				if re.search(format_info.get('Title'), ','.join(items.release.formats[0]['descriptions'])): 
-					category,format,weight = self.parse(format_info,items)
+				if re.search(format_info.get('Title'), ','.join(item.release.formats[0]['descriptions'])): 
+					self._parse(format_info,item)
 					break
-		return (category,format,weight)
+		self._format_fix(item,self.format)
 
-class csv_file():
-        ###fuctions for strings###
-	#removing unnesesary (number), those happens if there is few artists or labels have same name so to separate them from each other used (2) (3) etc
-	def artist_label_fix(self,line):
-		return re.sub('\s\(\d+\)','',str(line)) 
-	#fixing price since discogs using '.' and woocommerce ','.
-	def price_fix(self,line):
-		return str(line).replace('.',',')
-	def __init__(self, name, url, connection,folder):
+class Item():
+	def __init__(self, url, connection, folder):
 		#forming first line with name of rows
 		self.rows = ('ID', 'Type', 'SKU', 'Name', 'Published', 'Is featured?', 'Visibility in catalog', 'Short description', 'Description', 'Date sale price starts', \
 		'Date sale price ends', 'Tax status', 'Tax class', 'In stock?', 'Stock', 'Low stock amount', 'Backorders allowed?', 'Sold individually?', 'Weight (g)', \
 		'Length (cm)', 'Width (cm)', 'Height (cm)', 'Allow customer reviews?', 'Purchase note', 'Sale price', 'Regular price', 'Categories', 'Tags', 'Shipping class', \
 		'Images', 'Download limit', 'Download expiry days', 'Parent', 'Grouped products', 'Upsells', 'Cross-sells', 'External URL', 'Button text', 'Position')
-		self.csvfile=name #csv file for saving items
 		self.picturesurl=url #url where is stored pictures at your woocommerce shop
 		self.discogs_connection=connection
 		self.picturesfolder=folder
+		#self.picture=picture
 	def __str__(self):
 		return (self.line[3])
-	#creating file
-	def open_file(self): 
-		self.writer = csv.writer(open(self.csvfile, 'w',encoding='utf-8'), delimiter =',', quotechar='"', lineterminator='\r')
 	#generation of new line
 	def new_line(self,item): 
 		self.item=item
@@ -96,17 +126,14 @@ class csv_file():
 	def set_picture(self, picture):
 		self.line[29]= self.picturesurl+picture
 	def set_description(self, label):
-		self.line[7]=self.line[8]='<strong>('+self.artist_label_fix(label)+')</strong>'
+		self.line[7]=self.line[8]='<strong>('+self._artist_label_fix(label)+')</strong>'
 	def set_title(self, format):
-		self.line[3]=self.artist_label_fix(self.artist_fix())+' - '+str(self.item.release.title)+' '+str(self.format_fix(format))
+		self.line[3]=self._artist_label_fix(self._artist_fix())+' - '+str(self.item.release.title)+' '+str(format)
 	def set_price(self,price):
-		self.line[25]= self.price_fix(price)
-	def write_first_row(self): #writing first row with collumn names
-		self.writer.writerow(self.rows)	
-	def write_row(self):
-	        self.writer.writerow(self.line)
+		self.line[25]= self._price_fix(price)
+	#private methods
 	#parsing artist(s)
-	def artist_fix (self):
+	def _artist_fix (self):
 		artist = ''
 		#have to be parsed this way cause it is object 
 		for artists in self.item.release.artists: 
@@ -114,35 +141,25 @@ class csv_file():
 			else: artist = artist +'/'+ artists.name #if there is few artists theirs names will be separated with /
 		return (artist)		 				
 	#parsing label(s)
-	def label_fix (self):
+	def _label_fix (self):
 		label=''
 		for rawdata in self.item.release.labels: label=label+str(rawdata.name)+'/'
 		label=label[:-1] #removing last symbol cause it is always extra /
 		return (label)
-	#parsing format info
-	def format_fix(self,format):
-		#parsing additional information about release from descriptions, if it is possible, cause there is not always this information
-		try:
-			extra = ' '+','.join(self.item.release.formats[0]['descriptions'])
-			prefix_words='Digipak|Digipack|Slipcase|A5 Digibook|Digibook|Digisleeve|Gatefold|Split|Jewel case|Jewelcase'
-			#detecting MiniAlbums and Picture vinyls (might need to be rewritten in future)
-			if (re.search('Mini-Album|EP|Mini', extra)) and ((format=='CD') or (format=='LP')): format = 'M'+format #adding M infront for minialbum releases
-			if (re.search('Picture Disc', extra)): format = 'Picture '+format #adding Picture word infront of format info
-			#finding additional details about format and adding it to right place, and keeping all what is left in brackets (usually it is vinyl colour and similar details) 
-			extra=re.search(prefix_words, self.item.release.formats[0]['text']) #if any of those words found them going infront
-			format += ' ('+re.sub(prefix_words,'',self.item.release.formats[0]['text']) +')'#rest goes beind in brackets
-			format = extra.group() + ' ' + format
-			format = re.sub('\(\s*\)','',format) #removing empty additinonal info like () or ( )
-			format = re.sub('\(\s*((\s*\S+)*)\s*\)',  r'(\1)',format) #removing extra white spaces
-		except: pass
-		return (format)
+	def _artist_label_fix(self,line):
+		return re.sub('\s\(\d+\)','',str(line)) 
+	#fixing price since discogs using '.' and woocommerce ','.
+	def _price_fix(self,line):
+		return str(line).replace('.',',')
 	#main parse that parse everything using previous methods
 	def parser(self):
-		tmp = categories()
-		category,format,weight = tmp.detect(self.item)
-		self.set_title(format)
-		self.set_description(self.label_fix())
-		self.set_weight(weight)
+		tmp = Categories()
+		tmp.detect(self.item)
+		self.set_title(tmp.format)
+		self.set_description(self._label_fix())
+		self.set_weight(tmp.weight)
 		self.set_price(self.item.price.value)
-		self.set_category(category)
-		self.set_picture(self.discogs_connection.get_picture(self.picturesfolder,self.item))
+		self.set_category(tmp.category)
+		pic=Picture(self.picturesfolder,self.item)
+		pic.get_picture(self.discogs_connection.return_connection())
+		self.set_picture(pic.picture)	 

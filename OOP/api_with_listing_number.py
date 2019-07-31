@@ -9,17 +9,19 @@ picturesfolder='photos/' #folder for pictures
 picturesurl='YOUR URL' #url where is stored pictures at your woocommerce shop
 
 try:
-	connection = discogs_connection("ENTER YOUR TOKEN THERE")
+	connection = Discogs_connection("ENTER YOUR TOKEN THERE")
 	results=connection.get_inventory()
-	writer = csv_file(csvfile,picturesurl,connection,picturesfolder)
+	i = Item(picturesurl,connection,picturesfolder)
+	writer = Csv_file(csvfile)
 	writer.open_file()
+	writer.add_item(i)
 	writer.write_first_row()
-	for items in results:
-	#taking items that are for sale only (cause rest is private collection etc)
-		if (items.status == "For Sale") and (items.id>=int(sys.argv[1])):
-			writer.new_line(items)
-			writer.parser()
+	for item in results:
+		#taking items that are for sale only (cause rest is private collection etc)
+		if (item.status == "For Sale") and (items.id>=int(sys.argv[1])):
+			i.new_line(item)
+			i.parser()
 			writer.write_row()
-			print (u'Parsing - '+str(writer))
-except: pass
+			print (u'Parsing - '+str(i))
+expect: pass
 print ('Finished!')
