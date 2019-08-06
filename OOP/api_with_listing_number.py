@@ -17,7 +17,7 @@ try:
 	writer.add_item(i)
 	for item in results:
 		#taking items that are for sale only (cause rest is private collection etc)
-		if (item.status == "For Sale") and (items.id>=int(sys.argv[1])):
+		if (item.status == "For Sale") and (item.id>=int(sys.argv[1])):
 			i.new_line(item)
 			i.parser()
 			writer.write_row()
