@@ -1,12 +1,13 @@
 import sys, re, discogs_client, csv, win_unicode_console
 from parser_classes import *
+from date_folder import *
 from discogs_client.exceptions import HTTPError
 win_unicode_console.enable()
 
 #settings and identification
 csvfile='discogs.csv' #csv file for saving items
 picturesfolder='photos/' #folder for pictures
-picturesurl='YOUR URL' #url where is stored pictures at your woocommerce shop
+picturesurl='YOUR URL'+date_folder() #url where is stored pictures at your woocommerce shop
 
 try:
 	connection = Discogs_connection("ENTER YOUR TOKEN THERE")
