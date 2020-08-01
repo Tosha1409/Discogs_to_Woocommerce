@@ -11,6 +11,7 @@ picturesurl='YOUR URL'+date_folder() #url where is stored pictures at your wooco
 
 connection = Discogs_connection("ENTER YOUR TOKEN THERE")
 results=connection.get_inventory()
+print ('Amount of items -', len(results))
 i = Item(picturesurl,connection,picturesfolder)
 writer = Csv_file(csvfile)
 writer.open_file()
