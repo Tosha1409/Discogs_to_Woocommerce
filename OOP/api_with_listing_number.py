@@ -1,4 +1,5 @@
 import sys, re, discogs_client, csv, win_unicode_console
+from tqdm import tqdm
 from parser_classes import *
 from date_folder import *
 from discogs_client.exceptions import HTTPError
@@ -16,12 +17,12 @@ try:
 	writer = Csv_file(csvfile)
 	writer.open_file()
 	writer.add_item(i)
-	for item in results:
+	print ('Amount of items -', len(results))
+	for item in tqdm(results):
 		#taking items that are for sale only (cause rest is private collection etc)
 		if (item.status == "For Sale") and (item.id>=int(sys.argv[1])):
 			i.new_line(item)
 			i.parser()
 			writer.write_row()
-			print (u'Parsing - '+str(i))
 except: pass
 print ('Finished!')
