@@ -30,7 +30,7 @@ class Csv_file():
 	def add_item(self,item):
 	        self.item=item
 	def open_file(self): 
-		self.writer = csv.writer(open(self.csvfile, 'w',encoding='utf-8'), delimiter =',', quotechar='"', lineterminator='\r')
+		self.writer = csv.writer(open(self.csvfile, 'w',encoding='utf-8'), delimiter =',', quotechar='"', lineterminator='\n')
 	def write_first_row(self): #writing first row with collumn names
 		self.writer.writerow(self.item.rows)	
 	def write_row(self):
@@ -129,7 +129,8 @@ class Item():
 	def set_category(self,category):
 		self.line[26]= category
 	def set_picture(self, picture):
-		self.line[29]= self.picturesurl+picture
+		if picture != '': self.line[29]= self.picturesurl+picture
+		else: self.line[29]=''
 	def set_description(self, label):
 		self.line[7]=self.line[8]='<strong>('+self._artist_label_fix(label)+')</strong>'
 	def set_title(self, format):
