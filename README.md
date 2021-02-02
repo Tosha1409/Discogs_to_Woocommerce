@@ -12,8 +12,10 @@ at OOP folder you can find object version of script(not perfect either).
 4. Run and get your *CSV* file.
   
 and **OOP** folder includes:  
+**date_folder.py** - function that create date folders in Wordpress/WooCommerce.  
 **parser_classes.py** - classes.  
-**api.py** - parser that parsing all items for sale.  
-**api_with_listing_number.py** -  parser that parsing only items that have *particular(or higher)* item ID. It works pretty slowly because it is goes through all items, but it is still many times faster then make it manually. Unfortuantely, discogs is great webpage, but **Discogs API** is not that good as page itself, and documentation is even worse (if you check any resourse online that you can see it easily). And it makes development too complicated.
+**discogs_parser.py** - function for parsing items that have *particular(or higher)* item ID. It works pretty slowly because it is goes through all items, but it is still many times faster then make it manually. Unfortuantely, discogs is great webpage, but **Discogs API** is not that good as page itself, and documentation is even worse (if you check any resourse online that you can see it easily). And it makes development too complicated.  
+**parser.py** - command line version of parser. Parses all items if it is runned without parameters, otherwise takes first item ID as parameter.  
+**parser_gui.py** - GUI(tkinter) version of parser.  
   
 let me know if you have any questions.
