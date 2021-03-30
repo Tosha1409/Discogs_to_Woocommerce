@@ -1,4 +1,5 @@
 import sys, re, discogs_client, csv
+import urllib.request # added 29.3.2021, because connection._fetcher.fetch stopped to work, and was replaced with urllib. 
 
 #connection to discpgs API
 class Discogs_connection():
@@ -9,7 +10,7 @@ class Discogs_connection():
 		return (self.user_token)
 	#identification
 	def identify(self):
-		self.connection = discogs_client.Client('ExampleApplication/0.1', user_token=self.user_token) #discogs identification
+		self.connection = discogs_client.Client('TestApplication/0.5', user_token=self.user_token) #discogs identification
 		self.me=self.connection.identity()
 	#returns invetory
 	def get_inventory(self):
@@ -49,12 +50,19 @@ class Picture():
 	#retriving picture
 	def get_picture(self,connection):
 		try:
+			## Adding information about user agent (for urllib)
+			opener=urllib.request.build_opener()
+			opener.addheaders=[('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1941.0 Safari/537.36')]
+			urllib.request.install_opener(opener)
+
 			image = self.item_info.release.images[0]['uri']
-			#parsing and downloading first image
-			content, resp = connection._fetcher.fetch(None, 'GET', image, headers={'User-agent': connection.user_agent})
-			self.picture=(image.split('/')[-1]).split('.')[0]+'.jpg' 
-			with open(self.folder+self.picture, 'wb') as fh: fh.write(content)
-			fh.close()
+			###parsing and downloading first image
+			##content, resp = connection._fetcher.fetch(None, 'GET', image, headers={'User-agent': connection.user_agent})
+			self.picture=(image.split('/')[-1]).split('.')[0]+'.jpg'
+			##with open(self.folder+self.picture, 'wb') as fh: fh.write(content)
+			##fh.close()
+
+			urllib.request.urlretrieve(image, self.folder+self.picture) ##getting picture.
 		except: pass
 
 #categories
